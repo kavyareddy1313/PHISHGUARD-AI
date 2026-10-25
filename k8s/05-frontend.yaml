@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fishguard-frontend-deployment
+  namespace: fishguard
+  labels:
+    app: fishguard-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fishguard-frontend
+  template:
+    metadata:
+      labels:
+        app: fishguard-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: fishguard-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fishguard-frontend-service
+  namespace: fishguard
+spec:
+  type: LoadBalancer
+  selector:
+    app: fishguard-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
