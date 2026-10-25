@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fishguard-backend-deployment
+  namespace: fishguard
+  labels:
+    app: fishguard-backend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: fishguard-backend
+  template:
+    metadata:
+      labels:
+        app: fishguard-backend
+    spec:
+      containers:
+        - name: backend
+          image: fishguard-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - configMapRef:
+                name: fishguard-config
+            - secretRef:
+                name: fishguard-secrets
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fishguard-backend-service
+  namespace: fishguard
+spec:
+  selector:
+    app: fishguard-backend
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
