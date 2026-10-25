@@ -1,0 +1,41 @@
+{
+  "algorithm": "LogisticRegression",
+  "accuracy": 100.0,
+  "precision": 100.0,
+  "recall": 100.0,
+  "f1_score": 100.0,
+  "confusion_matrix": [
+    [
+      325,
+      0
+    ],
+    [
+      0,
+      325
+    ]
+  ],
+  "training_samples": 1950,
+  "test_samples": 650,
+  "benchmark_comparison": {
+    "LogisticRegression": {
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0
+    },
+    "MultinomialNB": {
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0
+    },
+    "RandomForest": {
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1_score": 100.0
+    }
+  },
+  "trained_at": "2026-10-25 09:15:57 UTC",
+  "duration_seconds": 0.25
+}
