@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # 1. Python ML Microservice (FastAPI + Scikit-Learn)
+  ml-engine:
+    build:
+      context: ./ml-engine
+      dockerfile: Dockerfile
+    container_name: fishguard-ml-engine
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - WORKERS=2
+    networks:
+      - fishguard-net
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 2. Node.js Backend API & WebSocket Engine
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fishguard-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - ML_SERVICE_URL=http://ml-engine:8001
+      - DATABASE_URL=postgres://fishguard:cybersecurity_secure_pass@postgres:5432/fishguard_db
+    depends_on:
+      ml-engine:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - fishguard-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 3. React Frontend Dashboard (Nginx SPA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fishguard-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - fishguard-net
+
+  # 4. PostgreSQL Relational Database for Threat Telemetry
+  postgres:
+    image: postgres:16-alpine
+    container_name: fishguard-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=fishguard
+      - POSTGRES_PASSWORD=cybersecurity_secure_pass
+      - POSTGRES_DB=fishguard_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - fishguard-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fishguard -d fishguard_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  fishguard-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
